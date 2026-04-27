@@ -137,15 +137,24 @@ export class Package {
 
     // Try loading into assigned vehicle first
   
+    // MANUAL ASSIGNMENT OVERRIDE (authoritative)
     if (this.assignedVehicle) {
-      if (this.tryLoadIntoVehicle(this.assignedVehicle)) {
-        return;
-      } else {
-        // IMPORTANT: clear invalid assignment
+      const vehicle = this.assignedVehicle;
+
+      // Case 1: assignment is INVALID → clear and fall back to auto
+      if (!vehicle.active || vehicle.loaded.length >= vehicle.capacity) {
         this.assignedVehicle = null;
+      } else {
+        // Case 2: assignment is VALID → try to load
+        if (this.tryLoadIntoVehicle(vehicle)) {
+          return; // loaded successfully, stop here
+        }
+
+        // Case 3: assignment is VALID but NOT READY YET
+        // Hold manual intent and BLOCK auto-loading
+        return;
       }
     }
-
 
     // Try automatic loading via loaders
     this.tryAutoLoad(vehicles, loaders);
