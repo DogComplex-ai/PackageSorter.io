@@ -301,11 +301,6 @@ export class UIManager {
       }
     });
 
-    // Employee upgrade buttons
-    this.gameState.employees.unloader.setVisible(show);
-    this.gameState.employees.loaders.forEach(loader => {
-      loader.setVisible(show);
-    });
   }
 
   /**
