@@ -136,11 +136,16 @@ export class Package {
     if (this.loaded || this.missed) return;
 
     // Try loading into assigned vehicle first
+  
     if (this.assignedVehicle) {
       if (this.tryLoadIntoVehicle(this.assignedVehicle)) {
         return;
+      } else {
+        // IMPORTANT: clear invalid assignment
+        this.assignedVehicle = null;
       }
     }
+
 
     // Try automatic loading via loaders
     this.tryAutoLoad(vehicles, loaders);
