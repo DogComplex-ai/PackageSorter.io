@@ -62,17 +62,6 @@ export class UIManager {
    */
   createHUD() {
 
-  console.log('[UIManager] createHUD() called');
-
-  this.hudPanel = this.scene.add.rectangle(
-    100, 50, 200, 60, 0xff0000
-  ).setDepth(1000);
-
-  this.moneyText = this.scene.add.text(
-    20, 30, 'MONEY TEST', { color: '#ffffff' }
-  ).setDepth(1001);
-
-    
     const hud = GameConfig.ui.hud;
 
     // Background panel
