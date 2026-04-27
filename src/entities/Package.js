@@ -132,45 +132,15 @@ export class Package {
    * @param {Array} vehicles - All vehicles
    * @param {Array} loaders - All loaders
    */
-
-tryLoad(vehicles, loaders) {
-  // Absolute safety: loading must never block movement
-  try {
+  tryLoad(vehicles, loaders) {
     if (this.loaded || this.missed) return;
 
-    // ================================
-    // MANUAL ASSIGNMENT (authoritative)
-    // ================================
+    // Try loading into assigned vehicle first
     if (this.assignedVehicle) {
-      const vehicle = this.assignedVehicle;
-
-      // INVALID forever → clear and allow fallback
-      if (!vehicle.active || vehicle.loaded.length >= vehicle.capacity) {
-        this.assignedVehicle = null;
-      } else {
-        // VALID assignment → try to load
-        if (this.tryLoadIntoVehicle(vehicle)) {
-          return; // success
-        }
-
-        // VALID but pending → block auto-sort, keep belt moving
+      if (this.tryLoadIntoVehicle(this.assignedVehicle)) {
         return;
       }
     }
-
-    // ================================
-    // AUTO SORTING (only if no manual)
-    // ================================
-    this.tryAutoLoad(vehicles, loaders);
-
-  } catch (err) {
-    console.error('Package load error — continuing belt', err);
-
-    // Fail-safe reset: never freeze the game
-    this.assignedVehicle = null;
-    return;
-  }
-}
 
     // Try automatic loading via loaders
     this.tryAutoLoad(vehicles, loaders);
