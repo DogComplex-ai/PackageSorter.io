@@ -132,29 +132,45 @@ export class Package {
    * @param {Array} vehicles - All vehicles
    * @param {Array} loaders - All loaders
    */
-  tryLoad(vehicles, loaders) {
+
+tryLoad(vehicles, loaders) {
+  // Absolute safety: loading must never block movement
+  try {
     if (this.loaded || this.missed) return;
 
-    // Try loading into assigned vehicle first
-  
+    // =================================================
     // MANUAL ASSIGNMENT OVERRIDE (authoritative)
+    // =================================================
     if (this.assignedVehicle) {
       const vehicle = this.assignedVehicle;
 
-      // Case 1: assignment is INVALID → clear and fall back to auto
+      // INVALID assignment → clear and fall back to auto
       if (!vehicle.active || vehicle.loaded.length >= vehicle.capacity) {
         this.assignedVehicle = null;
       } else {
-        // Case 2: assignment is VALID → try to load
+        // VALID assignment → try to load
         if (this.tryLoadIntoVehicle(vehicle)) {
-          return; // loaded successfully, stop here
+          return; // loaded successfully
         }
 
-        // Case 3: assignment is VALID but NOT READY YET
-        // Hold manual intent and BLOCK auto-loading
+        // VALID but pending → block auto-load, keep belt moving
         return;
       }
     }
+
+    // =================================================
+    // AUTOMATIC LOADING (only if no manual assignment)
+    // =================================================
+    this.tryAutoLoad(vehicles, loaders);
+
+  } catch (err) {
+    console.error('Package load error — continuing belt', err);
+
+    // Fail-safe: clear bad state and allow belt to continue
+    this.assignedVehicle = null;
+    return;
+  }
+}
 
     // Try automatic loading via loaders
     this.tryAutoLoad(vehicles, loaders);
