@@ -35,6 +35,9 @@ export class UIManager {
 
     // Event subscriptions
     this.eventSubscriptions = [];
+
+    //Construct hud update
+    this.create();
   }
 
   /**
