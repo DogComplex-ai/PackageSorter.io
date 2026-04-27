@@ -1,0 +1,41 @@
+{
+  "name": "package-sorting-game",
+  "version": "1.0.0",
+  "description": "A modular package sorting simulation game built with Phaser",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx vite",
+    "build": "npx vite build",
+    "preview": "npx vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "game",
+    "phaser",
+    "simulation",
+    "sorting",
+    "logistics"
+  ],
+  "author": "Package Sim Team",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "serve": "^14.2.0"
+  },
+  "peerDependencies": {
+    "phaser": "^3.70.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/package-sorting-game.git"
+  },
+  "bugs": {
+    "url": "https://github.com/example/package-sorting-game/issues"
+  },
+  "homepage": "https://github.com/example/package-sorting-game#readme"
+}
