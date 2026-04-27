@@ -134,7 +134,12 @@ export class Package {
    */
   tryLoad(vehicles, loaders) {
     if (this.loaded || this.missed) return;
-
+    
+  // BLOCK auto-sorting while the package is manually selected
+  if (this.selected && !this.assignedVehicle) {
+    return;
+  }
+    
     // Try loading into assigned vehicle first
     if (this.assignedVehicle) {
       if (this.tryLoadIntoVehicle(this.assignedVehicle)) {
