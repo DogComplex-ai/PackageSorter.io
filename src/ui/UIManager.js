@@ -301,6 +301,20 @@ export class UIManager {
       }
     });
 
+    // Employee upgrade buttons ONLY (circles always visible)
+
+    // Unloader upgrade button
+    const unloader = this.gameState.employees.unloader;
+    if (unloader && unloader.plus) {
+      unloader.plus.setVisible(show);
+    }
+
+    // Loader upgrade buttons
+    this.gameState.employees.loaders.forEach(loader => {
+      if (loader.plus) {
+        loader.plus.setVisible(show);
+      }
+    }); 
   }
 
   /**
