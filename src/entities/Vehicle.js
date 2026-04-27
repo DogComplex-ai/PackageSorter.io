@@ -140,6 +140,10 @@ export class Vehicle {
     const selectedPackage = this.scene.gameState.selectedPackage;
     if (selectedPackage) {
       selectedPackage.assignedVehicle = this;
+
+    // IMMEDIATELY clear selection after assignment
+    this.scene.gameState.deselectPackage();
+
     }
   }
 
