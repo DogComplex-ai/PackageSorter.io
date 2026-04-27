@@ -56,6 +56,7 @@ export class GameScene extends Phaser.Scene {
     // Initialize systems
     this.waveSystem = new WaveSystem(this.gameState, this);
     this.uiManager = new UIManager(this, this.gameState);
+    this.uiManager.create();
 
     // Setup event handlers
     this.setupEventHandlers();
