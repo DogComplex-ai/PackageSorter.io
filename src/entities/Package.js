@@ -138,35 +138,35 @@ tryLoad(vehicles, loaders) {
   try {
     if (this.loaded || this.missed) return;
 
-    // =================================================
-    // MANUAL ASSIGNMENT OVERRIDE (authoritative)
-    // =================================================
+    // ================================
+    // MANUAL ASSIGNMENT (authoritative)
+    // ================================
     if (this.assignedVehicle) {
       const vehicle = this.assignedVehicle;
 
-      // INVALID assignment → clear and fall back to auto
+      // INVALID forever → clear and allow fallback
       if (!vehicle.active || vehicle.loaded.length >= vehicle.capacity) {
         this.assignedVehicle = null;
       } else {
         // VALID assignment → try to load
         if (this.tryLoadIntoVehicle(vehicle)) {
-          return; // loaded successfully
+          return; // success
         }
 
-        // VALID but pending → block auto-load, keep belt moving
+        // VALID but pending → block auto-sort, keep belt moving
         return;
       }
     }
 
-    // =================================================
-    // AUTOMATIC LOADING (only if no manual assignment)
-    // =================================================
+    // ================================
+    // AUTO SORTING (only if no manual)
+    // ================================
     this.tryAutoLoad(vehicles, loaders);
 
   } catch (err) {
     console.error('Package load error — continuing belt', err);
 
-    // Fail-safe: clear bad state and allow belt to continue
+    // Fail-safe reset: never freeze the game
     this.assignedVehicle = null;
     return;
   }
