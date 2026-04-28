@@ -5,6 +5,7 @@
 
 import { GameConfig } from '../config/gameConfig.js';
 import { GameState } from '../state/GameState.js';
+import { SaveManager } from '../state/SaveManager.js';
 import { Vehicle } from '../entities/Vehicle.js';
 import { Unloader } from '../entities/Employee.js';
 import { Loader } from '../entities/Employee.js';
@@ -22,6 +23,7 @@ export class GameScene extends Phaser.Scene {
     this.gameState = null;
     this.waveSystem = null;
     this.uiManager = null;
+    this.saveManager = null;
     
     // Visual elements
     this.belt = null;
@@ -44,6 +46,9 @@ export class GameScene extends Phaser.Scene {
     // Make gameState available to all entities
     this.gameState.scene = this;
 
+    // Save/load manager (progression-only, between waves)
+    this.saveManager = new SaveManager(this.gameState);
+
     // Create the conveyor belt
     this.createBelt();
 
@@ -55,7 +60,7 @@ export class GameScene extends Phaser.Scene {
 
     // Initialize systems
     this.waveSystem = new WaveSystem(this.gameState, this);
-    this.uiManager = new UIManager(this, this.gameState);
+    this.uiManager = new UIManager(this, this.gameState, this.saveManager);
 
     // Setup event handlers
     this.setupEventHandlers();
@@ -114,6 +119,7 @@ export class GameScene extends Phaser.Scene {
 
     this.gameState.events.on('wave:ended', (results) => {
       console.log('Wave ended:', results);
+      if (this.saveManager) this.saveManager.save();
     });
 
     this.gameState.events.on('economy:insufficientFunds', (data) => {
