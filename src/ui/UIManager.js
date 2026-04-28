@@ -350,6 +350,62 @@ export class UIManager {
     }); 
   }
 
+/**
+ * Create Save / Load buttons (between waves only)
+ */
+createSaveLoadButtons() {
+  if (!this.saveManager) return;
+
+  const btn = GameConfig.ui.startButton;
+  const centerX = GameConfig.base.width / 2;
+  const y = btn.y + 38;
+  const w = 92;
+  const h = 26;
+  const gap = 14;
+
+  this.saveBtn = this.scene.add.rectangle(
+    centerX - (w / 2 + gap / 2),
+    y,
+    w,
+    h,
+    0x2a3b2a
+  ).setStrokeStyle(1, 0x55aa55)
+   .setInteractive({ useHandCursor: true });
+
+  this.saveLbl = this.scene.add.text(
+    centerX - (w / 2 + gap / 2),
+    y,
+    'SAVE',
+    { fontSize: '12px', color: '#c8ffc8' }
+  ).setOrigin(0.5);
+
+  this.loadBtn = this.scene.add.rectangle(
+    centerX + (w / 2 + gap / 2),
+    y,
+    w,
+    h,
+    0x2a2a3b
+  ).setStrokeStyle(1, 0x5555aa)
+   .setInteractive({ useHandCursor: true });
+
+  this.loadLbl = this.scene.add.text(
+    centerX + (w / 2 + gap / 2),
+    y,
+    'LOAD',
+    { fontSize: '12px', color: '#c8c8ff' }
+  ).setOrigin(0.5);
+
+  this.saveBtn.on('pointerdown', () => {
+    if (!this.gameState.isBetweenWaves()) return;
+    this.saveManager.save();
+  });
+
+  this.loadBtn.on('pointerdown', () => {
+    if (!this.gameState.isBetweenWaves()) return;
+    this.saveManager.load();
+  });
+}
+  
   /**
    * Destroy all UI elements and cleanup
    */
