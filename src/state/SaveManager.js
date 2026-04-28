@@ -7,9 +7,6 @@ const SAVE_KEY = 'packagesorter.save.v1';
 const SAVE_VERSION = 1;
 
 export class SaveManager {
-  /**
-   * @param {import('./GameState.js').GameState} gameState
-   */
   constructor(gameState) {
     this.gameState = gameState;
   }
@@ -17,30 +14,13 @@ export class SaveManager {
   hasSave() {
     try {
       return !!localStorage.getItem(SAVE_KEY);
-    } catch (_) {
+    } catch {
       return false;
     }
   }
 
-  clear() {
-    try {
-      localStorage.removeItem(SAVE_KEY);
-      this.gameState.events.emit('state:cleared');
-      return true;
-    } catch (e) {
-      this.gameState.events.emit('state:saveFailed', {
-        reason: 'storage_unavailable',
-        error: String(e),
-      });
-      return false;
-    }
-  }
-
-  /**
-   * Save progression snapshot. Allowed only between waves.
-   */
   save() {
-    if (!this.gameState.isBetweenWaves()) {
+    if (typeof this.gameState.isBetweenWaves === 'function' && !this.gameState.isBetweenWaves()) {
       this.gameState.events.emit('state:saveFailed', { reason: 'active_wave' });
       return false;
     }
@@ -57,18 +37,15 @@ export class SaveManager {
       return true;
     } catch (e) {
       this.gameState.events.emit('state:saveFailed', {
-        reason: 'quota_or_storage_error',
+        reason: 'storage_error',
         error: String(e),
       });
       return false;
     }
   }
 
-  /**
-   * Load progression snapshot. Allowed only between waves.
-   */
   load() {
-    if (!this.gameState.isBetweenWaves()) {
+    if (typeof this.gameState.isBetweenWaves === 'function' && !this.gameState.isBetweenWaves()) {
       this.gameState.events.emit('state:loadFailed', { reason: 'active_wave' });
       return false;
     }
@@ -78,7 +55,7 @@ export class SaveManager {
       raw = localStorage.getItem(SAVE_KEY);
     } catch (e) {
       this.gameState.events.emit('state:loadFailed', {
-        reason: 'storage_unavailable',
+        reason: 'storage_error',
         error: String(e),
       });
       return false;
@@ -91,11 +68,7 @@ export class SaveManager {
 
     try {
       const payload = JSON.parse(raw);
-
-      if (!payload || typeof payload !== 'object') {
-        throw new Error('Invalid payload');
-      }
-
+      if (!payload || typeof payload !== 'object') throw new Error('Invalid payload');
       if (payload.version !== SAVE_VERSION) {
         this.gameState.events.emit('state:loadFailed', {
           reason: 'version_mismatch',
@@ -104,19 +77,13 @@ export class SaveManager {
         });
         return false;
       }
-
-      if (!payload.data || typeof payload.data !== 'object') {
-        throw new Error('Missing snapshot data');
-      }
+      if (!payload.data || typeof payload.data !== 'object') throw new Error('Missing snapshot data');
 
       this.gameState.fromJSON(payload.data);
       return true;
     } catch (e) {
-      // Corrupt save: remove to prevent recurring failures
-      try {
-        localStorage.removeItem(SAVE_KEY);
-      } catch (_) {}
-
+      // If corrupt, remove to prevent repeated failures
+      try { localStorage.removeItem(SAVE_KEY); } catch {}
       this.gameState.events.emit('state:loadFailed', {
         reason: 'corrupt_save',
         error: String(e),
@@ -126,7 +93,4 @@ export class SaveManager {
   }
 }
 
-export const SaveMeta = {
-  SAVE_KEY,
-  SAVE_VERSION,
-};
+export const SaveMeta = { SAVE_KEY, SAVE_VERSION };
