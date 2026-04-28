@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Package Sorting Game - v1.0.0 (Refactored)</title>
+  <title>Package Sorting Game - v1.0.1</title>
   <style>
     * {
       margin: 0;
@@ -112,27 +112,38 @@
   </script>
 
   <!-- Main game script -->
-  <script type="module">
-    // Import game modules
-    import { game, gameConfig } from './src/main.js';
+<script type="module">
+  import { game } from './src/main.js';
 
-    // Hide loading overlay when game is ready
-    game.events.once('ready', () => {
-      const overlay = document.getElementById('loading-overlay');
-      if (overlay) {
-        overlay.classList.add('hidden');
-        setTimeout(() => overlay.remove(), 500);
-      }
-    });
+  const hideOverlay = () => {
+    const overlay = document.getElementById('loading-overlay');
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+    setTimeout(() => overlay.remove(), 500);
+  };
 
-    // Handle game errors
-    game.events.on('hidden', () => {
-      console.log('Game hidden');
-    });
+  // Phaser Core READY is the reliable “game booted & systems ready” event. 
+  if (window.Phaser?.Core?.Events?.READY) {
+    game.events.once(Phaser.Core.Events.READY, hideOverlay);
+  } else {
+    // Fallback (shouldn't happen if Phaser CDN loaded)
+    setTimeout(hideOverlay, 250);
+  }
 
-    game.events.on('visible', () => {
-      console.log('Game visible');
-    });
-  </script>
+  // Optional app-level signal (only matters if you emit it from your scene)
+  game.events.once('app:ready', hideOverlay);
+
+  // Hard fallback: never leave overlay stuck forever
+  setTimeout(hideOverlay, 2000);
+
+  // Visibility events (prefer Phaser constants) 
+  if (window.Phaser?.Core?.Events?.HIDDEN) {
+    game.events.on(Phaser.Core.Events.HIDDEN, () => console.log('Game hidden'));
+    game.events.on(Phaser.Core.Events.VISIBLE, () => console.log('Game visible'));
+  } else {
+    game.events.on('hidden', () => console.log('Game hidden'));
+    game.events.on('visible', () => console.log('Game visible'));
+  }
+</script>
 </body>
 </html>
