@@ -102,50 +102,80 @@ export class Package {
    * Update package position (move along belt)
    * @param {number} delta - Time delta in milliseconds
    */
-  update(delta) {
-    if (this.loaded || this.missed) return;
+update(delta) {
+  if (this.loaded || this.missed) return;
 
-    const speed = GameConfig.base.beltSpeed;
-    const movement = (speed * delta) / 1000;
+  // ---- belt movement ----
+  const speed = GameConfig.base.beltSpeed;
+  const movement = (speed * delta) / 1000;
     
-    this.body.x += movement;
-    this.overlay.x = this.body.x;
-    this.outline.x = this.body.x;
+  this.body.x += movement;
+  this.overlay.x = this.body.x;
+  this.outline.x = this.body.x;
 
-    // Check if package reached end of belt
-    if (this.body.x >= GameConfig.base.beltEndX) {
-      this.missed = true;
-      this.body.x = GameConfig.base.beltEndX;
-      this.overlay.x = GameConfig.base.beltEndX;
-      this.outline.setVisible(false);
-      
-      // Deselect if this was the selected package
-      if (this.scene.gameState?.selectedPackage === this) {
-        this.scene.gameState.deselectPackage();
-      }
+  // ---- miss logic ----
+  if (this.body.x >= GameConfig.base.beltEndX) {
+    this.missed = true;
+    this.body.x = GameConfig.base.beltEndX;
+    this.overlay.x = GameConfig.base.beltEndX;
+    this.outline.setVisible(false);
+
+    if (this.scene.gameState?.selectedPackage === this) {
+      this.scene.gameState.deselectPackage();
+    }
+    return;
+  }
+
+  // =================================================
+  // LOAD WINDOW GATE (THIS RESTORES 0.6.30)
+  // =================================================
+  const vehicles = this.scene.gameState.vehicles;
+  let nearLoadWindow = false;
+
+  for (const v of vehicles) {
+    const slot = GameConfig.vehicleSlots[v.slotIndex];
+    if (isWithinProximity(this.body.x, slot.x)) {
+      nearLoadWindow = true;
+      break;
     }
   }
 
+  if (!nearLoadWindow) {
+    // Cannot load yet; selection exists but no execution
+    return;
+  }
+
+  // =================================================
+  // CONSUME SELECTION AT LOAD WINDOW EDGE
+  // =================================================
+  if (this.selected) {
+    this.scene.gameState.deselectPackage();
+  }
+
+  // =================================================
+  // NOW attempt loading ONCE
+  // =================================================
+  this.tryLoad(
+    this.scene.gameState.vehicles,
+    this.scene.gameState.employees.loaders
+  );
+}
   /**
    * Try to load this package into a vehicle
    * Handles both assigned vehicle and automatic loading via loaders
    * @param {Array} vehicles - All vehicles
    * @param {Array} loaders - All loaders
    */
-  tryLoad(vehicles, loaders) {
-    if (this.loaded || this.missed) return;
-    
-  // BLOCK auto-sorting while the package is manually selected
-  if (this.selected && !this.assignedVehicle) {
-    return;
-  }
-    
-    // Try loading into assigned vehicle first
-    if (this.assignedVehicle) {
-      if (this.tryLoadIntoVehicle(this.assignedVehicle)) {
-        return;
-      }
+ 
+tryLoad(vehicles, loaders) {
+  if (this.loaded || this.missed) return;
+
+  // Manual assignment has priority
+  if (this.assignedVehicle) {
+    if (this.tryLoadIntoVehicle(this.assignedVehicle)) {
+      return;
     }
+  }
 
     // Try automatic loading via loaders
     this.tryAutoLoad(vehicles, loaders);
