@@ -375,7 +375,7 @@ createSaveLoadButtons() {
   const y = btn.y + 38;
   const w = 92;
   const h = 26;
-  const gap = 14;
+  const gap = 18;
   const pad = 10;
 
   const leftX  = centerX - (w / 2 + gap / 2);
@@ -400,17 +400,17 @@ createSaveLoadButtons() {
   this.loadLbl = this.scene.add.text(loadX, y, 'LOAD', { fontSize: '12px', color: '#c8c8ff' })
     .setOrigin(0.5);
 
+    this.saveLoadStatusText = this.scene.add.text(20, 80, '', {
+  fontSize: '11px',
+  color: '#aaaaaa'
+});
+  
   // Use your safe predicate (avoid direct isBetweenWaves dependency)
   this.saveBtn.on('pointerdown', () => { if (!this._isBetweenWaves()) return; this.saveManager.save(); });
   this.loadBtn.on('pointerdown', () => { if (!this._isBetweenWaves()) return; this.saveManager.load(); });
 
   this.updateSaveLoadButtons();
 }
-
-    this.saveLoadStatusText = this.scene.add.text(20, 80, '', {
-  fontSize: '11px',
-  color: '#aaaaaa'
-});
   
 updateSaveLoadButtons() {
   // If you are not using save/load in this build, do nothing.
