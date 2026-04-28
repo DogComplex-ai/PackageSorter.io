@@ -282,7 +282,6 @@ export class UIManager {
     this.waveText.setText(`Wave: ${this.gameState.wave.current}`);
     this.moneyText.setText(`Money: ${formatCurrency(this.gameState.economy.money)}`);
     this.operatingCostText.setText(`Operating Cost: ${formatCurrency(this.gameState.economy.operatingCost)}`);
-
     this.updateSaveLoadButtons();
   }
 
@@ -375,7 +374,7 @@ createSaveLoadButtons() {
   const y = btn.y + 38;
   const w = 92;
   const h = 26;
-  const gap = 18;
+  const gap = 20;
   const pad = 10;
 
   const leftX  = centerX - (w / 2 + gap / 2);
