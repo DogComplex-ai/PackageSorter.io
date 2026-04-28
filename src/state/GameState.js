@@ -31,7 +31,7 @@ export class EventManager {
    * @param {string} event - Event name
    * @param {*} data - Event data
    */
-  emit(event, data = {}) {
+  emit(event, data = null) {
     if (this.events[event]) {
       this.events[event].forEach(callback => callback(data));
     }
@@ -78,7 +78,7 @@ export class GameState {
       operatingCost: 0,
     };
 
-    // Collections
+    // Collections (transient runtime state)
     this.packages = [];
     this.vehicles = [];
     this.selectedPackage = null;
@@ -90,6 +90,14 @@ export class GameState {
     };
 
     this.updateOperatingCost();
+  }
+
+  /**
+   * True when the game is in a safe posture to Save/Load.
+   * (Per your decision: between waves only, no mid-wave resume)
+   */
+  isBetweenWaves() {
+    return !!this.wave.betweenWaves && !this.wave.active;
   }
 
   /**
@@ -133,20 +141,20 @@ export class GameState {
    */
   addMoney(amount) {
     if (amount === 0) return true;
-    
+
     const newBalance = this.economy.money + amount;
     if (newBalance < 0) {
-      this.events.emit('economy:insufficientFunds', { 
-        current: this.economy.money, 
-        required: Math.abs(amount) 
+      this.events.emit('economy:insufficientFunds', {
+        current: this.economy.money,
+        required: Math.abs(amount),
       });
       return false;
     }
 
     this.economy.money = newBalance;
-    this.events.emit('economy:moneyChanged', { 
-      amount, 
-      newBalance: this.economy.money 
+    this.events.emit('economy:moneyChanged', {
+      amount,
+      newBalance: this.economy.money,
     });
     return true;
   }
@@ -156,10 +164,13 @@ export class GameState {
    * @returns {number} Total operating cost per wave
    */
   calculateOperatingCost() {
-    let total = this.employees.unloader.operatingCosts[this.employees.unloader.tier];
+    let total =
+      this.employees.unloader.operatingCosts[this.employees.unloader.tier];
+
     this.employees.loaders.forEach(loader => {
       total += loader.operatingCosts[loader.tier];
     });
+
     return total;
   }
 
@@ -168,8 +179,8 @@ export class GameState {
    */
   updateOperatingCost() {
     this.economy.operatingCost = this.calculateOperatingCost();
-    this.events.emit('economy:operatingCostChanged', { 
-      operatingCost: this.economy.operatingCost 
+    this.events.emit('economy:operatingCostChanged', {
+      operatingCost: this.economy.operatingCost,
     });
   }
 
@@ -216,7 +227,7 @@ export class GameState {
     }
 
     this.updateOperatingCost();
-    
+
     this.events.emit('employee:downgraded', target);
     return target;
   }
@@ -235,7 +246,7 @@ export class GameState {
     }
 
     const operatingCost = this.calculateOperatingCost();
-    
+
     // Try to afford operating cost, downgrading if necessary
     while (this.economy.money < operatingCost) {
       if (!this.downgradeHighestCostUnit()) {
@@ -260,7 +271,7 @@ export class GameState {
       }
     });
 
-    this.events.emit('wave:started', { 
+    this.events.emit('wave:started', {
       waveNumber: this.wave.current,
       packageLimit: this.wave.packageLimit,
     });
@@ -270,62 +281,22 @@ export class GameState {
 
   /**
    * End the current wave
-   * @returns {object} Wave results
+   * @returns {object} Wave results (minimal, caller/system can expand)
    */
   endWave() {
     this.wave.active = false;
     this.wave.betweenWaves = true;
 
-    // Calculate results
-    let revenue = 0;
-    let missed = 0;
-
-    this.packages.forEach(pkg => {
-      if (!pkg.loaded) missed++;
+    this.events.emit('wave:ended', {
+      waveNumber: this.wave.current,
     });
 
-    this.vehicles.forEach(vehicle => {
-      revenue += vehicle.loaded.length * GameConfig.economy.packageRevenue;
-    });
-
-    const penalty = missed * GameConfig.economy.missedPenaltyPerPackage;
-    const netChange = revenue - penalty;
-
-    // Apply money changes
-    this.addMoney(netChange);
-
-    // Clear packages
-    this.packages.forEach(pkg => pkg.destroy());
-    this.packages = [];
-    this.selectedPackage = null;
-
-    // Prepare next wave
-    this.wave.current++;
-    this.wave.packageLimit += GameConfig.waves.packageIncreasePerWave;
-
-    // Clear vehicle loads
-    this.vehicles.forEach(vehicle => {
-      vehicle.loaded = [];
-      vehicle.shape = null;
-      vehicle.color = null;
-    });
-
-    const results = {
-      waveNumber: this.wave.current - 1,
-      revenue,
-      missed,
-      penalty,
-      netChange,
-      newMoney: this.economy.money,
-    };
-
-    this.events.emit('wave:ended', results);
-    return results;
+    return { waveNumber: this.wave.current };
   }
 
   /**
    * Select a package
-   * @param {object} pkg - Package to select
+   * @param {object|null} pkg - Package to select
    */
   selectPackage(pkg) {
     if (this.selectedPackage) {
@@ -380,56 +351,138 @@ export class GameState {
    * @returns {number} Spawn interval in milliseconds
    */
   getEffectiveSpawnInterval() {
-    const multiplier = this.employees.unloader.spawnIntervalMultipliers[this.employees.unloader.tier];
+    const multiplier =
+      this.employees.unloader.spawnIntervalMultipliers[this.employees.unloader.tier];
     return GameConfig.waves.baseSpawnInterval * multiplier;
   }
 
+  // ==========================================
+  // Save/Load (progression-only)
+  // ==========================================
+
   /**
-   * Create a serializable state snapshot
-   * @returns {object} State snapshot
+   * Create a serializable progression snapshot.
+   * IMPORTANT: This is NOT a full simulation snapshot.
+   * No packages, no timers, no selections, no per-wave vehicle assignments.
+   * @returns {object} Progression snapshot
    */
   toJSON() {
     return {
-      wave: deepClone(this.wave),
-      economy: deepClone(this.economy),
+      wave: {
+        // progression only
+        current: this.wave.current,
+        packageLimit: this.wave.packageLimit,
+      },
+      economy: {
+        money: this.economy.money,
+      },
       employees: {
-        unloader: deepClone(this.employees.unloader),
-        loaders: deepClone(this.employees.loaders),
+        unloaderTier: this.employees.unloader.tier,
+        loaders: this.employees.loaders.map(l => ({
+          id: l.id,
+          tier: l.tier,
+        })),
       },
       vehicles: this.vehicles.map(v => ({
         slotIndex: v.slotIndex,
         active: v.active,
-        upgrades: v.upgrades,
+        upgrades: deepClone(v.upgrades),
         capacity: v.capacity,
-        stream: v.stream,
-        shape: v.shape,
-        color: v.color,
       })),
     };
   }
 
   /**
-   * Load state from a snapshot
-   * @param {object} snapshot - State snapshot
+   * Load progression from a snapshot (between waves only).
+   * Rebuild transient state, then apply progression.
+   * @param {object} snapshot - Progression snapshot
    */
   fromJSON(snapshot) {
-    this.wave = deepClone(snapshot.wave);
-    this.economy = deepClone(snapshot.economy);
-    this.employees.unloader = deepClone(snapshot.employees.unloader);
-    this.employees.loaders = deepClone(snapshot.employees.loaders);
+    // Basic validation (keep it strict to prevent half-applied states)
+    if (!snapshot || typeof snapshot !== 'object') {
+      this.events.emit('state:loadFailed', { reason: 'invalid_snapshot' });
+      return;
+    }
 
-    // Restore vehicle state
-    snapshot.vehicles.forEach((vData, index) => {
-      if (index < this.vehicles.length) {
-        const vehicle = this.vehicles[index];
-        vehicle.active = vData.active;
-        vehicle.upgrades = vData.upgrades;
-        vehicle.capacity = vData.capacity;
-        vehicle.shape = vData.shape;
-        vehicle.color = vData.color;
+    // Force safe posture per design choice (no mid-wave load)
+    this.wave.active = false;
+    this.wave.betweenWaves = true;
+    this.wave.packagesSpawned = 0;
+    this.wave.spawnTimer = 0;
+
+    // Clear transient runtime collections
+    this.packages = [];
+    this.selectedPackage = null;
+
+    // Apply wave progression
+    if (snapshot.wave) {
+      if (Number.isFinite(snapshot.wave.current)) {
+        this.wave.current = snapshot.wave.current;
       }
-    });
+      if (Number.isFinite(snapshot.wave.packageLimit)) {
+        this.wave.packageLimit = snapshot.wave.packageLimit;
+      }
+    }
+
+    // Apply economy
+    if (snapshot.economy && Number.isFinite(snapshot.economy.money)) {
+      this.economy.money = snapshot.economy.money;
+      this.events.emit('economy:moneyChanged', {
+        amount: 0,
+        newBalance: this.economy.money,
+      });
+    }
+
+    // Recreate employees from config (prevents stale arrays after balance changes)
+    this.employees.unloader = this.createUnloader();
+    this.employees.loaders = this.createLoaders();
+
+    if (snapshot.employees) {
+      if (Number.isFinite(snapshot.employees.unloaderTier)) {
+        this.employees.unloader.tier = Math.max(
+          0,
+          Math.min(this.employees.unloader.maxTier, snapshot.employees.unloaderTier)
+        );
+      }
+
+      if (Array.isArray(snapshot.employees.loaders)) {
+        snapshot.employees.loaders.forEach(savedLoader => {
+          const target = this.employees.loaders.find(l => l.id === savedLoader.id);
+          if (target && Number.isFinite(savedLoader.tier)) {
+            target.tier = Math.max(0, Math.min(target.maxTier, savedLoader.tier));
+          }
+        });
+      }
+    }
+
+    // Restore vehicle progression by slotIndex (not by array index)
+    if (Array.isArray(snapshot.vehicles)) {
+      snapshot.vehicles.forEach(vData => {
+        const vehicle = this.vehicles.find(v => v.slotIndex === vData.slotIndex);
+        if (!vehicle) return;
+
+        vehicle.active = !!vData.active;
+
+        if (vData.upgrades && typeof vData.upgrades === 'object') {
+          vehicle.upgrades = deepClone(vData.upgrades);
+        }
+
+        // Capacity: if your Vehicle computes capacity from upgrades internally,
+        // you can remove this assignment and call vehicle.recalculateCapacity()
+        if (Number.isFinite(vData.capacity)) {
+          vehicle.capacity = vData.capacity;
+        }
+
+        // Do NOT restore shape/color: assigned at wave start
+        if ('shape' in vehicle) vehicle.shape = null;
+        if ('color' in vehicle) vehicle.color = null;
+      });
+    }
+
+    // Derived values
+    this.updateOperatingCost();
 
     this.events.emit('state:loaded', snapshot);
   }
 }
+``
