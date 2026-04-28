@@ -405,6 +405,35 @@ createSaveLoadButtons() {
     this.saveManager.load();
   });
 }
+
+updateSaveLoadButtons() {
+  // If you are not using save/load in this build, do nothing.
+  if (!this.saveManager || !this.saveBtn || !this.loadBtn) return;
+
+  // Between-waves gating (your policy: no mid-wave load/save)
+  const between = (typeof this.gameState.isBetweenWaves === 'function')
+    ? this.gameState.isBetweenWaves()
+    : (this.gameState.wave?.betweenWaves && !this.gameState.wave?.active);
+
+  const has = (typeof this.saveManager.hasSave === 'function')
+    ? this.saveManager.hasSave()
+    : false;
+
+  // Visual gating
+  const saveAlpha = between ? 1 : 0.35;
+  const loadAlpha = (between && has) ? 1 : 0.35;
+
+  this.saveBtn.setAlpha(saveAlpha);
+  this.saveLbl?.setAlpha(saveAlpha);
+
+  this.loadBtn.setAlpha(loadAlpha);
+  this.loadLbl?.setAlpha(loadAlpha);
+
+  // Interaction gating
+  if (this.saveBtn.input) this.saveBtn.input.enabled = !!between;
+  if (this.loadBtn.input) this.loadBtn.input.enabled = !!(between && has);
+}
+
   
   /**
    * Destroy all UI elements and cleanup
