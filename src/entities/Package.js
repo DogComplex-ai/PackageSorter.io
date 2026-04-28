@@ -143,7 +143,6 @@ export class Package {
   }
     // Try automatic loading via loaders
     this.tryAutoLoad(vehicles, loaders);
-      if (this.selected) return;
   }
   /**
    * Try to load into a specific vehicle
@@ -151,7 +150,7 @@ export class Package {
    * @returns {boolean} True if loaded successfully
    */
   tryLoadIntoVehicle(vehicle) {
-    if (!vehicle.active || vehicle.loaded.length >= vehicle.capacity) {
+    if (!vehicle.active || vehicle.loaded.length >= vehicle.capacity || !this.assignedVehicle) {
       return false;
     }
 
