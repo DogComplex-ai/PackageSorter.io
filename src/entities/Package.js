@@ -171,7 +171,7 @@ export class Package {
    */
   tryAutoLoad(vehicles, loaders) {
     for (const loader of loaders) {
-      if (this.loaded || this.assignedVehicle && vehicle !== this.assignedVehicle) break;
+      if (this.loaded) break;
       if (loader.tier === 0 || loader.stream !== this.stream) continue;
 
       for (const slotIndex of loader.covers) {
