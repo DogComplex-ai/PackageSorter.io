@@ -133,7 +133,7 @@ export class Package {
    * @param {Array} loaders - All loaders
    */
   tryLoad(vehicles, loaders) {
-    if (this.loaded || this.missed || this.selectedPackage) return;
+    if (this.loaded || this.missed || this.selected) return;
 
     // Try loading into assigned vehicle first
   if (this.assignedVehicle) {
