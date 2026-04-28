@@ -14,9 +14,12 @@ export class UIManager {
    * @param {Phaser.Scene} scene - Phaser scene reference
    * @param {object} gameState - Reference to game state
    */
-  constructor(scene, gameState) {
+  constructor(scene, gameState, saveManager = null) {
     this.scene = scene;
     this.gameState = gameState;
+
+    // Save/load manager (optional)
+    this.saveManager = saveManager;
 
     // UI element references
     this.hudPanel = null;
@@ -29,6 +32,12 @@ export class UIManager {
 
     this.startWaveBtn = null;
     this.startWaveLbl = null;
+
+    this.saveBtn = null;
+    this.saveLbl = null;
+    this.loadBtn = null;
+    this.loadLbl = null;
+    this.saveLoadStatusText = null;
 
     this.inboundTruckBody = null;
     this.inboundTruckText = null;
@@ -47,6 +56,7 @@ export class UIManager {
     this.createHUD();
     this.createWaveCompletePanel();
     this.createStartButton();
+    this.createSaveLoadButtons();
     this.createInboundTruck();
 
     // Subscribe to events
@@ -209,6 +219,27 @@ export class UIManager {
     this.eventSubscriptions.push(
       events.on('employee:downgraded', () => this.updateHUD())
     );
+
+    // Save/Load feedback events
+    this.gameState.events.on('state:saved', () => {
+      this.showSaveLoadMessage('Saved', '#c8ffc8');
+      this.updateSaveLoadButtons();
+    });
+    this.gameState.events.on('state:loaded', () => {
+      this.showSaveLoadMessage('Loaded', '#c8c8ff');
+      this.updateHUD();
+      this.updateSaveLoadButtons();
+    });
+    this.gameState.events.on('state:saveFailed', (d) => {
+      const r = d?.reason || 'save_failed';
+      this.showSaveLoadMessage('Save failed: ' + r, '#ffaaaa', 2200);
+      this.updateSaveLoadButtons();
+    });
+    this.gameState.events.on('state:loadFailed', (d) => {
+      const r = d?.reason || 'load_failed';
+      this.showSaveLoadMessage('Load failed: ' + r, '#ffaaaa', 2200);
+      this.updateSaveLoadButtons();
+    });
   }
 
   /**
@@ -251,6 +282,8 @@ export class UIManager {
     this.waveText.setText(`Wave: ${this.gameState.wave.current}`);
     this.moneyText.setText(`Money: ${formatCurrency(this.gameState.economy.money)}`);
     this.operatingCostText.setText(`Operating Cost: ${formatCurrency(this.gameState.economy.operatingCost)}`);
+
+    this.updateSaveLoadButtons();
   }
 
   /**
