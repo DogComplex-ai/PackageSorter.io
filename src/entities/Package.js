@@ -143,6 +143,7 @@ export class Package {
   }
     // Try automatic loading via loaders
     this.tryAutoLoad(vehicles, loaders);
+      if (this.selected) return;
   }
   /**
    * Try to load into a specific vehicle
