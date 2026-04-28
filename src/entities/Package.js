@@ -133,7 +133,7 @@ export class Package {
    * @param {Array} loaders - All loaders
    */
   tryLoad(vehicles, loaders) {
-    if (this.loaded || this.missed) return;
+    if (this.loaded || this.missed || this.selectedPackage) return;
 
     // Try loading into assigned vehicle first
   if (this.assignedVehicle) {
@@ -150,7 +150,7 @@ export class Package {
    * @returns {boolean} True if loaded successfully
    */
   tryLoadIntoVehicle(vehicle) {
-    if (!vehicle.active || vehicle.loaded.length >= vehicle.capacity || !this.assignedVehicle) {
+    if (!vehicle.active || vehicle.loaded.length >= vehicle.capacity) {
       return false;
     }
 
