@@ -133,7 +133,7 @@ export class Package {
    * @param {Array} loaders - All loaders
    */
   tryLoad(vehicles, loaders) {
-    if (this.assignedVehicle && vehicle !== this.assignedVehicle || this.loaded || this.missed) return;
+    if (this.loaded || this.missed) return;
 
     // Try loading into assigned vehicle first
   if (this.assignedVehicle) {
@@ -171,7 +171,7 @@ export class Package {
    */
   tryAutoLoad(vehicles, loaders) {
     for (const loader of loaders) {
-      if (this.loaded) break;
+      if (this.loaded || this.assignedVehicle && vehicle !== this.assignedVehicle) break;
       if (loader.tier === 0 || loader.stream !== this.stream) continue;
 
       for (const slotIndex of loader.covers) {
