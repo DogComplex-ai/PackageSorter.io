@@ -349,7 +349,17 @@ export class UIManager {
       }
     }); 
   }
-
+  
+// Add isBetweenWaves function
+_isBetweenWaves() {
+  // Prefer the method if it exists
+  if (typeof this.gameState?.isBetweenWaves === 'function') {
+    return this.gameState.isBetweenWaves();
+  }
+  // Fallback to wave flags
+  return !!this.gameState?.wave?.betweenWaves && !this.gameState?.wave?.active;
+}
+  
 /**
  * Create Save / Load buttons (between waves only)
  */
@@ -395,15 +405,20 @@ createSaveLoadButtons() {
     { fontSize: '12px', color: '#c8c8ff' }
   ).setOrigin(0.5);
 
-  this.saveBtn.on('pointerdown', () => {
-    if (!this.gameState.isBetweenWaves()) return;
-    this.saveManager.save();
-  });
+this.saveBtn.on('pointerdown', () => {
+  if (!this._isBetweenWaves()) return;
+  this.saveManager.save();
+});
 
-  this.loadBtn.on('pointerdown', () => {
-    if (!this.gameState.isBetweenWaves()) return;
-    this.saveManager.load();
-  });
+this.loadBtn.on('pointerdown', () => {
+  if (!this._isBetweenWaves()) return;
+  this.saveManager.load();
+});
+  
+  this.saveLoadStatusText = this.scene.add.text(20, 80, '', {
+  fontSize: '11px',
+  color: '#aaaaaa'
+});
 }
 
 updateSaveLoadButtons() {
@@ -434,6 +449,17 @@ updateSaveLoadButtons() {
   if (this.loadBtn.input) this.loadBtn.input.enabled = !!(between && has);
 }
 
+  showSaveLoadMessage(message, color = '#aaaaaa', durationMs = 1600) {
+  // Safe no-op if you didn't create a status text object
+  if (!this.saveLoadStatusText) return;
+
+  this.saveLoadStatusText.setColor(color);
+  this.saveLoadStatusText.setText(message);
+
+  this.scene.time.delayedCall(durationMs, () => {
+    if (this.saveLoadStatusText) this.saveLoadStatusText.setText('');
+  });
+}
   
   /**
    * Destroy all UI elements and cleanup
