@@ -314,6 +314,10 @@ export class UIManager {
     this.waveCompleteText.setVisible(show);
     this.startWaveBtn.setVisible(show);
     this.startWaveLbl.setVisible(show);
+    this.saveBtn.setVisible(show);
+    this.saveLbl.setVisible(show);
+    this.loadBtn.setVisible(show);
+    this.loadLbl.setVisible(show);
 
     // Vehicle upgrade buttons
     this.gameState.vehicles.forEach(vehicle => {
@@ -372,48 +376,36 @@ createSaveLoadButtons() {
   const w = 92;
   const h = 26;
   const gap = 14;
+  const pad = 10;
 
-  this.saveBtn = this.scene.add.rectangle(
-    centerX - (w / 2 + gap / 2),
-    y,
-    w,
-    h,
-    0x2a3b2a
-  ).setStrokeStyle(1, 0x55aa55)
-   .setInteractive({ useHandCursor: true });
+  const leftX  = centerX - (w / 2 + gap / 2);
+  const rightX = centerX + (w / 2 + gap / 2);
 
-  this.saveLbl = this.scene.add.text(
-    centerX - (w / 2 + gap / 2),
-    y,
-    'SAVE',
-    { fontSize: '12px', color: '#c8ffc8' }
-  ).setOrigin(0.5);
+  const clampX = (x) => Phaser.Math.Clamp(x, w / 2 + pad, GameConfig.base.width - (w / 2 + pad));
 
-  this.loadBtn = this.scene.add.rectangle(
-    centerX + (w / 2 + gap / 2),
-    y,
-    w,
-    h,
-    0x2a2a3b
-  ).setStrokeStyle(1, 0x5555aa)
-   .setInteractive({ useHandCursor: true });
+  const saveX = clampX(leftX);
+  const loadX = clampX(rightX);
 
-  this.loadLbl = this.scene.add.text(
-    centerX + (w / 2 + gap / 2),
-    y,
-    'LOAD',
-    { fontSize: '12px', color: '#c8c8ff' }
-  ).setOrigin(0.5);
+  this.saveBtn = this.scene.add.rectangle(saveX, y, w, h, 0x2a3b2a)
+    .setStrokeStyle(1, 0x55aa55)
+    .setInteractive({ useHandCursor: true });
 
-this.saveBtn.on('pointerdown', () => {
-  if (!this._isBetweenWaves()) return;
-  this.saveManager.save();
-});
+  this.saveLbl = this.scene.add.text(saveX, y, 'SAVE', { fontSize: '12px', color: '#c8ffc8' })
+    .setOrigin(0.5);
 
-this.loadBtn.on('pointerdown', () => {
-  if (!this._isBetweenWaves()) return;
-  this.saveManager.load();
-});
+  this.loadBtn = this.scene.add.rectangle(loadX, y, w, h, 0x2a2a3b)
+    .setStrokeStyle(1, 0x5555aa)
+    .setInteractive({ useHandCursor: true });
+
+  this.loadLbl = this.scene.add.text(loadX, y, 'LOAD', { fontSize: '12px', color: '#c8c8ff' })
+    .setOrigin(0.5);
+
+  // Use your safe predicate (avoid direct isBetweenWaves dependency)
+  this.saveBtn.on('pointerdown', () => { if (!this._isBetweenWaves()) return; this.saveManager.save(); });
+  this.loadBtn.on('pointerdown', () => { if (!this._isBetweenWaves()) return; this.saveManager.load(); });
+
+  this.updateSaveLoadButtons();
+}
   
   this.saveLoadStatusText = this.scene.add.text(20, 80, '', {
   fontSize: '11px',
@@ -482,6 +474,10 @@ updateSaveLoadButtons() {
     // Destroy start button elements
     if (this.startWaveBtn) { this.startWaveBtn.destroy(); this.startWaveBtn = null; }
     if (this.startWaveLbl) { this.startWaveLbl.destroy(); this.startWaveLbl = null; }
+    if (this.saveBtn) {this.saveBtn.destroy(); this.saveBtn = null;}
+    if (this.saveLbl) {this.saveLbl.destroy(); this.saveLbl = null;}
+    if (this.loadBtn) {this.loadBtn.destroy(); this.loadBtn = null;}
+    if (this.loadLbl) {this.loadLbl.destroy(); this.loadLbl = null;}
 
     // Destroy inbound truck elements
     if (this.inboundTruckBody) { this.inboundTruckBody.destroy(); this.inboundTruckBody = null; }
