@@ -226,6 +226,7 @@ export class UIManager {
       this.updateSaveLoadButtons();
     });
     this.gameState.events.on('state:loaded', () => {
+      this.refreshUIFromState('load');
       this.showSaveLoadMessage('Loaded', '#c8c8ff');
       this.updateHUD();
       this.updateSaveLoadButtons();
@@ -450,6 +451,44 @@ updateSaveLoadButtons() {
     if (this.saveLoadStatusText) this.saveLoadStatusText.setText('');
   });
 }
+
+refreshUIFromState(reason = 'unknown') {
+  // 1) Core HUD text
+  if (typeof this.updateHUD === 'function') {
+    this.updateHUD();
+  }
+
+  // 2) Between-wave UI visibility (since load is between waves only)
+  if (typeof this.showBetweenWaveUI === 'function') {
+    this.showBetweenWaveUI(true);
+  }
+
+  // 3) Save/Load gating (alpha + input enable)
+  if (typeof this.updateSaveLoadButtons === 'function') {
+    this.updateSaveLoadButtons();
+  }
+
+  // 4) Employee visuals (tier colors / labels)
+  // IMPORTANT: call the SAME function(s) you call after employee upgrade/downgrade.
+  if (typeof this.updateEmployeesUI === 'function') this.updateEmployeesUI();
+  if (typeof this.updateEmployeeUI === 'function') this.updateEmployeeUI();
+  if (typeof this.updateLoaderUI === 'function') this.updateLoaderUI();
+  if (typeof this.refreshEmployeeTierColors === 'function') this.refreshEmployeeTierColors();
+
+  // 5) Vehicle visuals (capacity text, loaded text, upgrade buttons/cost labels, buy buttons)
+  // IMPORTANT: call the SAME function(s) you call after vehicle upgrade/purchase.
+  if (typeof this.updateVehiclesUI === 'function') this.updateVehiclesUI();
+  if (typeof this.updateVehicleUI === 'function') this.updateVehicleUI();
+  if (typeof this.refreshVehiclePanels === 'function') this.refreshVehiclePanels();
+  if (typeof this.updateVehicleDisplays === 'function') this.updateVehicleDisplays();
+
+  // 6) Any selection state visuals (if you highlight selected package/vehicle)
+  if (typeof this.clearSelectionUI === 'function') this.clearSelectionUI();
+
+  // Optional: debug log to confirm this is firing
+  // console.log('[UI] refreshUIFromState:', reason);
+}
+
   
   /**
    * Destroy all UI elements and cleanup
