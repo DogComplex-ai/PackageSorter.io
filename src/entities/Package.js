@@ -29,6 +29,7 @@ export class Package {
     this.missed = false;
     this.selected = false;
     this.assignedVehicle = null;
+    this.manualIntent = false;
     
     // Symbol from shape definition
     this.symbol = GameConfig.shapes[shape]?.symbol || '?';
@@ -87,6 +88,7 @@ export class Package {
    */
   select() {
     this.selected = true;
+    this.manualIntent = true;
     this.outline.setVisible(true);
   }
 
@@ -170,16 +172,23 @@ update(delta) {
 tryLoad(vehicles, loaders) {
   if (this.loaded || this.missed) return;
 
-  // Manual assignment has priority
-  if (this.assignedVehicle) {
+  // Resolve manual intent ONCE
+  if (this.manualIntent && this.assignedVehicle) {
+    this.manualIntent = false;
+    
+    if (this.selected) {
+      this.selected = false;
+      this.outline.setVisible(false);
+    }
+
     if (this.tryLoadIntoVehicle(this.assignedVehicle)) {
       return;
     }
   }
 
-    // Try automatic loading via loaders
-    this.tryAutoLoad(vehicles, loaders);
-  }
+  // Otherwise auto-sort
+  this.tryAutoLoad(vehicles, loaders);
+}
 
   /**
    * Try to load into a specific vehicle
