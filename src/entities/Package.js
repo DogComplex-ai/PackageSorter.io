@@ -133,7 +133,7 @@ export class Package {
    * @param {Array} loaders - All loaders
    */
   tryLoad(vehicles, loaders) {
-    if (this.loaded || this.missed || this.selected) return;
+    if (this.loaded || this.missed) return;
 
     // Try loading into assigned vehicle first
   if (this.assignedVehicle) {
@@ -200,6 +200,12 @@ export class Package {
    */
   completeLoad(vehicle) {
     this.loaded = true;
+    
+  if (this.selected) {
+    this.selected = false;
+    this.scene.gameState?.deselectPackage(this);
+  }
+
     vehicle.loaded.push(this);
     
     // Update vehicle label
