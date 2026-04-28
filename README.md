@@ -1,4 +1,4 @@
-# Package Sorting Game - v1.0.0 (Refactored)
+# Package Sorting Game - v1.0.1
 
 A modular package sorting simulation game built with Phaser 3. This refactored version transforms the original monolithic codebase into a clean, maintainable, and extensible architecture.
 
