@@ -150,7 +150,7 @@ export class Package {
    * @returns {boolean} True if loaded successfully
    */
   tryLoadIntoVehicle(vehicle) {
-    if (!vehicle.active || vehicle.loaded.length >= vehicle.capacity) {
+    if (this.assignedVehicle && vehicle !== this.assignedVehicle ||!vehicle.active || vehicle.loaded.length >= vehicle.capacity) {
       return false;
     }
 
