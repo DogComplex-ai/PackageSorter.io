@@ -411,7 +411,6 @@ createSaveLoadButtons() {
   fontSize: '11px',
   color: '#aaaaaa'
 });
-}
 
 updateSaveLoadButtons() {
   // If you are not using save/load in this build, do nothing.
