@@ -405,12 +405,12 @@ createSaveLoadButtons() {
   this.loadBtn.on('pointerdown', () => { if (!this._isBetweenWaves()) return; this.saveManager.load(); });
 
   this.updateSaveLoadButtons();
-  
-  this.saveLoadStatusText = this.scene.add.text(20, 80, '', {
+}
+
+    this.saveLoadStatusText = this.scene.add.text(20, 80, '', {
   fontSize: '11px',
   color: '#aaaaaa'
 });
-}
   
 updateSaveLoadButtons() {
   // If you are not using save/load in this build, do nothing.
