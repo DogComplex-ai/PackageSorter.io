@@ -193,6 +193,11 @@ export class UIManager {
   subscribeToEvents() {
     const { events } = this.gameState;
 
+    // Rebuild saved state
+    this.gameState.events.on('state:loaded', () => {
+      this.rebuildProgressionUIFromState();
+    });
+    
     // Economy updates
     this.eventSubscriptions.push(
       events.on('economy:moneyChanged', () => this.updateHUD())
@@ -489,6 +494,25 @@ refreshUIFromState(reason = 'unknown') {
   // console.log('[UI] refreshUIFromState:', reason);
 }
 
+  rebuildProgressionUIFromState() {
+  // Always refresh the simple HUD first
+  this.updateHUD?.();
+
+  // Ensure between-wave UI visibility is correct
+  this.showBetweenWaveUI?.(true);
+
+  // 1) Employees (colors/tiers)
+  this.destroyEmployeeUI?.();
+  this.createEmployeeUI?.();
+  // If you don’t have these methods, factor them from your existing create logic.
+
+  // 2) Vehicles (capacity labels, upgrade costs, buy/active states)
+  this.destroyVehicleUI?.();
+  this.createVehicleUI?.();
+
+  // 3) Save/load gating + status
+  this.updateSaveLoadButtons?.();
+  }
   
   /**
    * Destroy all UI elements and cleanup
