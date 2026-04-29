@@ -65,8 +65,32 @@ export class GameScene extends Phaser.Scene {
     // Setup event handlers
     this.setupEventHandlers();
 
+    // Create handler for loaded state
+    this.gameState.events.on('state:loaded', () => {
+      this.refreshVisualsFromState();
+    });
+
   }
 
+  refreshVisualsFromState() {
+  // Vehicles: force text + visuals to match restored upgrades/capacity
+  this.gameState.vehicles.forEach(v => {
+    if (typeof v.refreshFromState === 'function') v.refreshFromState();
+    else if (typeof v.updateDisplay === 'function') v.updateDisplay();
+  });
+
+  // Employees: force tier colors to match restored tiers
+  const un = this.gameState.employees?.unloader;
+  if (un && typeof un.refreshFromState === 'function') un.refreshFromState();
+
+  this.gameState.employees?.loaders?.forEach(l => {
+    if (typeof l.refreshFromState === 'function') l.refreshFromState();
+  });
+
+  // UIManager: still do HUD refresh + panels (money/wave/etc.)
+  this.uiManager?.refreshUIFromState?.('load');
+}
+  
   /**
    * Create the conveyor belt visual
    */
